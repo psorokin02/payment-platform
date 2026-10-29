@@ -1,0 +1,15 @@
+**/target/
+**/build/
+.gradle/
+**/node_modules/
+**/dist/
+.runtime/
+.DS_Store
+.idea/
+*.iml
+*.tsbuildinfo
+*.log
+.env
+.env.*
+!.env.example
+!.env.sample

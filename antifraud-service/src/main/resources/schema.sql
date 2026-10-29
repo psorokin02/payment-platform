@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS antifraud_checks (
+  request_id VARCHAR(128) PRIMARY KEY,
+  amount NUMERIC(14,2) NOT NULL,
+  payment_type VARCHAR(32) NOT NULL,
+  approved BOOLEAN NOT NULL,
+  reason VARCHAR(64) NOT NULL,
+  checked_at TIMESTAMP WITH TIME ZONE NOT NULL
+);

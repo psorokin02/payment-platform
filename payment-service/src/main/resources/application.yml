@@ -1,0 +1,92 @@
+# HTTP API Payment и локальная демонстрация.
+server:
+  port: 8081
+  address: 127.0.0.1
+
+spring:
+  application:
+    name: payment-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:55432/payment_lab
+    username: demo
+    password: demo
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    # LAZY-связи загружаются внутри сервиса, а не во время сериализации HTTP-ответа.
+    open-in-view: false
+
+  data:
+    redis:
+      host: localhost
+      port: 56379
+      timeout: 500ms
+
+  kafka:
+    bootstrap-servers: localhost:59092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        "[enable.idempotence]": true
+        "[delivery.timeout.ms]": 5000
+        "[request.timeout.ms]": 2000
+        # send может ждать metadata/buffer; не держим HTTP-поток дольше секунды на вызов.
+        "[max.block.ms]": 1000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+logging:
+  level:
+    # SQL виден в консоли и панели логов, значения параметров и таймеры не выводим.
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: "OFF"
+    org.hibernate.SQL_SLOW: "OFF"
+    org.hibernate.stat: ERROR
+    org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: "OFF"
+    # Опрос панели логов не создаёт поток HTTP DEBUG-записей.
+    org.springframework.web: WARN
+    org.apache.coyote: WARN
+
+app:
+  cache:
+    # Кэш — только представление карточки, не источник финансового решения.
+    payment-ttl-seconds: 300
+
+  kafka:
+    confirmed-topic: payment.events
+
+  antifraud:
+    base-url: http://localhost:8082
+    connect-timeout: 500ms
+    read-timeout: 900ms
+    max-attempts: 3
+    retry-delay: 150ms
+    circuit-window-size: 4
+    circuit-failure-rate: 50
+    circuit-open-duration: 8s
+
+# Документация генерируется из контроллеров и DTO каждого backend.
+springdoc:
+  group-configs:
+    - group: business
+      display-name: Основные операции
+      paths-to-match:
+        - /api/payments/**
+        - /api/customers/**
+    - group: admin
+      display-name: Настройки и учебные режимы
+      paths-to-match:
+        - /api/admin/**
+  swagger-ui:
+    urls-primary-name: Основные операции
+    try-it-out-enabled: true
+    doc-expansion: list
+    tags-sorter: alpha

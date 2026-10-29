@@ -1,0 +1,57 @@
+server:
+  port: 8082
+  address: 127.0.0.1
+
+spring:
+  application:
+    name: antifraud-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:55432/payment_lab
+    username: demo
+    password: demo
+
+  sql:
+    init:
+      mode: always
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Таблица уже описана в schema.sql; Hibernate не меняет схему.
+      ddl-auto: none
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+logging:
+  level:
+    # Опрос панели логов не создаёт поток HTTP DEBUG-записей.
+    org.springframework.web: WARN
+    org.apache.coyote: WARN
+
+app:
+  simulation:
+    # Только slow: минута ожидания в контроллере, затем HTTP 503 без бизнес-проверки.
+    slow-delay-ms: 60000
+    risk-limit: 100000
+
+# Документация генерируется из контроллеров и DTO каждого backend.
+springdoc:
+  group-configs:
+    - group: business
+      display-name: Основные операции
+      paths-to-match:
+        - /checks/**
+    - group: admin
+      display-name: Настройки и учебные режимы
+      paths-to-match:
+        - /admin/**
+  swagger-ui:
+    urls-primary-name: Основные операции
+    try-it-out-enabled: true
+    doc-expansion: list
+    tags-sorter: alpha

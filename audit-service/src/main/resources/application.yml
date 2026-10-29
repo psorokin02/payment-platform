@@ -1,0 +1,71 @@
+server:
+  port: 8083
+  address: 127.0.0.1
+
+spring:
+  application:
+    name: audit-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:55432/payment_lab
+    username: demo
+    password: demo
+
+  sql:
+    init:
+      mode: always
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Таблицы уже описаны в schema.sql; Hibernate не меняет схему.
+      ddl-auto: none
+
+  kafka:
+    bootstrap-servers: localhost:59092
+    consumer:
+      # Сохраняем фактическую группу прежнего listener: смены offsets нет.
+      group-id: audit
+      auto-offset-reset: earliest
+      # Offset сохраняется контейнером после успешной обработки, а не по таймеру.
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+logging:
+  level:
+    # Опрос панели логов не создаёт поток HTTP DEBUG-записей.
+    org.springframework.web: WARN
+    org.apache.coyote: WARN
+
+app:
+  audit:
+    # Выключаем только для демонстрации повторных эффектов. Рестарт возвращает это значение.
+    idempotency-enabled: true
+  kafka:
+    confirmed-topic: payment.events
+
+# Документация генерируется из контроллеров и DTO каждого backend.
+springdoc:
+  group-configs:
+    - group: business
+      display-name: Основные операции
+      paths-to-match:
+        - /entries/**
+    - group: admin
+      display-name: Настройки и учебные режимы
+      paths-to-match:
+        - /admin/**
+  swagger-ui:
+    urls-primary-name: Основные операции
+    try-it-out-enabled: true
+    doc-expansion: list
+    tags-sorter: alpha
